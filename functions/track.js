@@ -7,38 +7,39 @@ exports.handler = async function (event) {
     if (!trackingNumber) {
         return {
             statusCode: 400,
+            headers: { 
+                "Access-Control-Allow-Origin": "*", 
+                "Access-Control-Allow-Headers": "Content-Type"
+            },
             body: JSON.stringify({ error: "Takip numarası girilmedi!" })
         };
     }
 
     try {
-        // 17Track External Call API'sine istek gönder
-        const response = await fetch(`https://www.17track.net/externalcall?nums=${trackingNumber}`);
-        
-        const htmlText = await response.text(); // Sayfanın HTML çıktısını al
-        
-        // 17Track verisini temizle ve HTML'den kargo durumunu çıkar
-        const regex = /"latest_status":"(.*?)"/;
-        const match = regex.exec(htmlText);
+        // 17Track’in external call sayfasını yükle
+        const response = await fetch(`https://www.17track.net/en/track?nums=${trackingNumber}`);
+        const text = await response.text();
 
-        if (match && match[1]) {
-            return {
-                statusCode: 200,
-                body: JSON.stringify({
-                    latest_status: match[1]
-                })
-            };
-        } else {
-            return {
-                statusCode: 404,
-                body: JSON.stringify({ error: "Takip numarası bulunamadı." })
-            };
-        }
+        // 17Track HTML çıktısından kargo durumunu çek
+        const match = text.match(/<span class="state-text">([^<]+)<\/span>/);
+        const status = match ? match[1].trim() : "Durum Bulunamadı";
 
+        return {
+            statusCode: 200,
+            headers: { 
+                "Access-Control-Allow-Origin": "*", 
+                "Access-Control-Allow-Headers": "Content-Type"
+            },
+            body: JSON.stringify({ status })
+        };
     } catch (error) {
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "Sunucu hatası, tekrar deneyin." })
+            headers: { 
+                "Access-Control-Allow-Origin": "*", 
+                "Access-Control-Allow-Headers": "Content-Type"
+            },
+            body: JSON.stringify({ error: "Kargo bilgisi alınamadı." })
         };
     }
 };
