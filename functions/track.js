@@ -12,23 +12,33 @@ exports.handler = async function (event) {
     }
 
     try {
-        const response = await fetch(`https://api.17track.net/track?number=${trackingNumber}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        });
+        // 17Track External Call API'sine istek gönder
+        const response = await fetch(`https://www.17track.net/externalcall?nums=${trackingNumber}`);
+        
+        const htmlText = await response.text(); // Sayfanın HTML çıktısını al
+        
+        // 17Track verisini temizle ve HTML'den kargo durumunu çıkar
+        const regex = /"latest_status":"(.*?)"/;
+        const match = regex.exec(htmlText);
 
-        const data = await response.json();
+        if (match && match[1]) {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    latest_status: match[1]
+                })
+            };
+        } else {
+            return {
+                statusCode: 404,
+                body: JSON.stringify({ error: "Takip numarası bulunamadı." })
+            };
+        }
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify(data)
-        };
     } catch (error) {
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "Kargo bilgisi alınamadı." })
+            body: JSON.stringify({ error: "Sunucu hatası, tekrar deneyin." })
         };
     }
 };
