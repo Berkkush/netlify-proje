@@ -16,12 +16,17 @@ exports.handler = async function (event) {
     }
 
     try {
-        // 17Track’in external call sayfasını yükle
-        const response = await fetch(`https://www.17track.net/en/track?nums=${trackingNumber}`);
+        // 17Track'e gerçek bir tarayıcı gibi istekte bulun
+        const response = await fetch(`https://www.17track.net/en/track?nums=${trackingNumber}`, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"
+            }
+        });
+
         const text = await response.text();
 
-        // 17Track HTML çıktısından kargo durumunu çek
-        const match = text.match(/<span class="state-text">([^<]+)<\/span>/);
+        // 17Track HTML'ini analiz ederek kargo durumunu bul
+        const match = text.match(/<span[^>]*class="state-text"[^>]*>([^<]+)<\/span>/);
         const status = match ? match[1].trim() : "Durum Bulunamadı";
 
         return {
