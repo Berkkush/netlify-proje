@@ -2,51 +2,40 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kargo Takip</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         input { padding: 10px; width: 300px; margin: 10px; }
         button { padding: 10px 20px; background-color: #007BFF; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #0056b3; }
-        #trackingStatus { margin-top: 20px; font-weight: bold; }
+        #YQContainer { margin-top: 20px; }
     </style>
 </head>
 <body>
-
     <h2>Kargo Takip</h2>
-    <p>Lütfen takip numaranızı aşağıya girin. Eğer takip numaranız çalışmazsa bizimle iletişime geçebilirsiniz.</p>
-
-    <!-- Kullanıcının takip numarası gireceği alan -->
-    <div style="text-align: center;">
-        <input type="text" id="YQNum" maxlength="50" placeholder="Takip numaranızı girin">
-        <input type="button" value="Takip Et" onclick="doTrack()">
-    </div>
-
-    <!-- Kargo takip sonuçlarını gösterecek alan -->
+    <p>Lütfen takip numaranızı girin. Eğer çalışmazsa, bizimle iletişime geçin.</p>
+    <input type="text" id="YQNum" maxlength="50" placeholder="Takip numaranızı girin">
+    <button onclick="doTrack()">Takip Et</button>
     <div id="YQContainer"></div>
 
-    <!-- 17Track’in External Call API’sini yükleyen JavaScript -->
-    <script type="text/javascript" src="https://www.17track.net/externalcall.js"></script>
-
+    <script type="text/javascript" src="//www.17track.net/externalcall.js"></script>
     <script type="text/javascript">
-        function doTrack() {
-            var num = document.getElementById("YQNum").value;
-
-            if (num === "") {
-                alert("Lütfen bir takip numarası girin.");
-                return;
-            }
-
-            // 17Track'in kendi fonksiyonunu kullanarak takip bilgisini çek
-            YQV5.trackSingle({
-                YQ_ContainerId: "YQContainer", // Takip sonucu buraya gelecek
-                YQ_Height: 560,  // Sonuç penceresinin yüksekliği
-                YQ_Fc: "0",  // Kargo firmasını otomatik seç
-                YQ_Lang: "tr",  // Dili Türkçe yap
-                YQ_Num: num  // Kullanıcının girdiği takip numarasını gönder
-            });
+    function doTrack() {
+        var num = document.getElementById("YQNum").value;
+        if(num===""){
+            alert("Lütfen bir takip numarası girin.");
+            return;
         }
-    </script>
 
+        YQV5.trackSingle({
+            YQ_ContainerId: "YQContainer",
+            YQ_Height: 560,
+            YQ_Fc: "0",
+            YQ_Lang: "tr",
+            YQ_Num: num
+        });
+    }
+    </script>
 </body>
 </html>
