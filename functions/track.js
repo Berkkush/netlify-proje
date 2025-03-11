@@ -1,4 +1,5 @@
-const fetch = require("node-fetch");
+const puppeteer = require("puppeteer-core");
+const chromium = require("chrome-aws-lambda");
 
 exports.handler = async function (event) {
     const params = new URLSearchParams(event.queryStringParameters);
@@ -16,18 +17,34 @@ exports.handler = async function (event) {
     }
 
     try {
-        // 17Track'e gerçek bir tarayıcı gibi istekte bulun
-        const response = await fetch(`https://www.17track.net/en/track?nums=${trackingNumber}`, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"
-            }
+        // Puppeteer ile headless browser başlat
+        const browser = await chromium.puppeteer.launch({
+            args: chromium.args,
+            executablePath: await chromium.executablePath,
+            headless: true
         });
 
-        const text = await response.text();
+        const page = await browser.newPage();
+        
+        // Netlify üzerindeki sayfayı aç ve takip numarasını input et
+        await page.goto("https://harmonious-meerkat-6d4a74.netlify.app/");
+        await page.type("#YQNum", trackingNumber);
+        await page.click("input[value='TRACK']");
 
-        // 17Track HTML'ini analiz ederek kargo durumunu bul
-        const match = text.match(/<span[^>]*class="state-text"[^>]*>([^<]+)<\/span>/);
-        const status = match ? match[1].trim() : "Durum Bulunamadı";
+        // 17Track verilerinin yüklenmesini bekle
+        await page.waitForSelector("#YQContainer", { timeout: 10000 });
+
+        // Verileri çek
+        const trackingData = await page.evaluate(() => {
+            let result = [];
+            let elements = document.querySelectorAll("#YQContainer .yq-activity-item");
+            elements.forEach(el => {
+                result.push(el.innerText.trim());
+            });
+            return result;
+        });
+
+        await browser.close();
 
         return {
             statusCode: 200,
@@ -35,7 +52,7 @@ exports.handler = async function (event) {
                 "Access-Control-Allow-Origin": "*", 
                 "Access-Control-Allow-Headers": "Content-Type"
             },
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ status: trackingData.join("\n") })
         };
     } catch (error) {
         return {
@@ -44,7 +61,7 @@ exports.handler = async function (event) {
                 "Access-Control-Allow-Origin": "*", 
                 "Access-Control-Allow-Headers": "Content-Type"
             },
-            body: JSON.stringify({ error: "Kargo bilgisi alınamadı." })
+            body: JSON.stringify({ error: "Kargo bilgisi alınamadı.", details: error.message })
         };
     }
 };
